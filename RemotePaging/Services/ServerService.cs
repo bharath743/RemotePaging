@@ -36,5 +36,30 @@ namespace RemotePaging.Services
                 return new List<Info>();
             }
         }
+
+        public async Task<List<Info2>> GetAsync2(int top, int skip)
+        {
+            try
+            {
+                var url = new Uri($"https://apitest.processcloud.net/PFAPI_Manager/pfapi/list?committente=2&class=RAPPINTE&top={top}&skip={skip}&sort=RowID DESC");
+                var response = await httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var rawJson = await response.Content.ReadAsStringAsync();//getting raw json data
+                    var raw = JObject.Parse(rawJson);
+                    var d = raw.SelectToken("value").ToObject<List<Info2>>();
+
+                    return d!;
+                }
+
+                //if there is a 400 badrequest result returns an empty list.
+                return new List<Info2>();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return new List<Info2>();
+            }
+        }
     }
 }

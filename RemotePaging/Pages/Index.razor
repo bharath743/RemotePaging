@@ -5,8 +5,9 @@
 
 <PageTitle>Index</PageTitle>
 
-<button>Load new data kind</button>
-<button>Display old</button>
+<button class="btn btn-outline-primary" @onclick="(()=>LoadFromApi1())">API 1</button>
+<button class="btn btn-outline-primary" @onclick="(()=>LoadDataFromAPi2())">API 2</button>
+<button class="btn btn-outline-info" @onclick="(()=>AutoFitAsync())">AutoFit</button>
 @if (DataSource.Any())
 {
     <a class="link-info" @onclick="(()=>LoadMore())" style="display:@d1;">More</a>
@@ -54,10 +55,43 @@
         }
     }
 
+    async void LoadFromApi1()
+    {
+        d1 = "block";
+        d2 = "none";
+        var initData = await server.GetAsync(20, 0);
+        DataSource = new ObservableCollection<object>(initData);
+        await Task.Delay(1000);
+        await telerikGrid.AutoFitAllColumnsAsync();
+    }
+
+    async void AutoFitAsync() => await telerikGrid.AutoFitAllColumnsAsync();
+
+    async void LoadDataFromAPi2()
+    {
+        d1 = "none";
+        d2 = "block";
+        var data = await server.GetAsync2(20, 0);
+        DataSource = new ObservableCollection<object>(data);
+        await Task.Delay(1000);
+        await telerikGrid.AutoFitAllColumnsAsync();
+    }
+
     async void LoadMore()
     {
+        
         var more = await server.GetAsync(20, 20);//request new amount of data.
         DataSource = new ObservableCollection<object>(DataSource.Concat(more));//merge the 2 lists. and update the data soucer for paging
+        await Task.Delay(1000);
+        await telerikGrid.AutoFitAllColumnsAsync();//auto fit all cols
+    }
+
+    async void LoadMore2()
+    {
+        
+        var more = await server.GetAsync2(20, 20);//request new amount of data.
+        DataSource = new ObservableCollection<object>(DataSource.Concat(more));//merge the 2 lists. and update the data soucer for paging
+        await Task.Delay(1000);
         await telerikGrid.AutoFitAllColumnsAsync();//auto fit all cols
     }
 
