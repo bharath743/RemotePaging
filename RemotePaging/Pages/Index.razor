@@ -1,9 +1,80 @@
 ﻿@page "/"
+@using System.Collections.ObjectModel
+
+@inject ServerService server
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+<button>Load new data kind</button>
+<button>Display old</button>
+@if (DataSource.Any())
+{
+    <a class="link-info" @onclick="(()=>LoadMore())" style="display:@d1;">More</a>
+    <a class="link-info" @onclick="(()=>LoadMore())" style="display:@d2;">More</a>
+    <TelerikGrid @ref="@telerikGrid"
+             Sortable=true
+             Pageable=true
+             FilterMode="@Telerik.Blazor.GridFilterMode.FilterMenu"
+             Resizable="true" Data="@DataSource">
+        <GridColumns>
+            @foreach (var p in DataSource.First().GetType().GetProperties())
+        {
+            <GridColumn Field="@p.Name" Title="@p.Name" Id="@p.Name" FieldType="@p.PropertyType" />
+        }
+    </GridColumns>
+</TelerikGrid>
+}
 
-Welcome to your new app.
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code {
+    TelerikGrid<object> telerikGrid;
+    ObservableCollection<object> DataSource = new ObservableCollection<object>();
+    private object item = default!;
+
+    string d1 = "block";
+    string d2 = "none";
+
+    protected override async Task OnInitializedAsync()
+    {
+        //load the  10 first elements when rendering the component.
+        //from api to avoid null reference exception
+        var initData = await server.GetAsync(20, 0);
+        DataSource = new ObservableCollection<object>(initData);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            await telerikGrid.AutoFitAllColumnsAsync();//auto fit all cols after component is loaded
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    async void LoadMore()
+    {
+        var more = await server.GetAsync(20, 20);//request new amount of data.
+        DataSource = new ObservableCollection<object>(DataSource.Concat(more));//merge the 2 lists. and update the data soucer for paging
+        await telerikGrid.AutoFitAllColumnsAsync();//auto fit all cols
+    }
+
+    //async void ReadData(GridReadEventArgs args)
+    //{
+    //    if (args.Request.Page > 1)
+    //    {
+    //        DataSource = new List<object>(DataSource);
+    //        var data = await server.GetAsync(args.Request.PageSize, args.Request.Page > 1 ? args.Request.PageSize : 0);
+    //        DataSource.AddRange(data);
+    //    }
+    //    //ensure that there is data from the service api
+    //    if (DataSource.Any())
+    //    {
+    //        //then assign data and the count.
+    //        args.Data = DataSource;//tranforme the object info into a generic object.
+    //        args.Total = DataSource.Count * 2;
+    //    }
+    //}
+}
